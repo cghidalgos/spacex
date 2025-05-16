@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <title>Formulario</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body class="bg-light p-4">
+  <div class="container">
+    <h2 class="mb-4 text-center">🧑‍🚀 Formulario de Postulación</h2>
+    <form action="/procesar" method="post">
+      {% set campos = [
+        ('nombre', 'text', '', '', '', 'Nombre completo del postulante.', 'Ej: Juan Pérez'),
+        ('edad', 'number', '', '12', '30', 'Edad entre 12 y 30 años.', 'Ej: 16'),
+        ('promedio', 'number', '0.1', '0', '5', 'Promedio académico entre 0 y 5.', 'Ej: 4'),
+        ('deportes', 'number', '', '1', '10', 'Habilidad en deportes entre 0 y 10.', 'Ej: 2'),
+        ('liderazgo', 'number', '', '1', '10', 'Habilidad de liderar equipos entre 0 y 10.', 'Ej: 1'),
+        ('club_ciencia', 'number', '', '1', '10', 'Habilidad en proyectos ciencia entre 0 y 10.', 'Ej: 6'),
+        ('ingles', 'number', '', '1', '10', 'Nivel de inglés del 1 (básico) al 10 (avanzado).', 'Ej: 7'),
+        ('condicion_fisica', 'number', '', '1', '10', 'Condición física del 1 al 10.', 'Ej: 6'),
+        ('trabajo_equipo', 'number', '', '1', '10', 'Habilidad para trabajar en equipo del 1 al 10.', 'Ej: 8'),
+        ('idiomas', 'number', '', '', '', 'Número de idiomas que domina.', 'Ej: 3'),
+        ('creatividad', 'number', '', '1', '10', 'Nivel de creatividad del 1 al 10.', 'Ej: 9')
+      ] %}
+
+      {% for campo, tipo, paso, min, max, descripcion, ejemplo in campos %}
+        <div class="form-group">
+          <label for="{{ campo }}">{{ campo.replace('_', ' ').capitalize() }}:</label>
+          <small class="form-text text-muted">{{ descripcion }}</small>
+          <input class="form-control"
+                 name="{{ campo }}"
+                 id="{{ campo }}"
+                 type="{{ tipo }}"
+                 step="{{ paso if paso else 'any' }}"
+                 min="{{ min }}"
+                 max="{{ max }}"
+                 placeholder="{{ ejemplo }}"
+                 required>
+        </div>
+      {% endfor %}
+
+      <button type="submit" class="btn btn-primary btn-block">Enviar</button>
+    </form>
+    <a href="/" class="btn btn-link mt-3">⬅ Volver</a>
+  </div>
+</body>
+</html>

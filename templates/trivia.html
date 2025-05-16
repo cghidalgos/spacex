@@ -1,0 +1,30 @@
+<!-- templates/trivia.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <title>Trivia Astronautas</title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body class="bg-light p-4">
+  <div class="container">
+    <h2 class="mb-4 text-center">🧑‍🚀 Trivia de Astronautas</h2>
+    <form method="post">
+      {% for p in preguntas %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">{{ p.pregunta }}</h5>
+            {% for op in p.opciones %}
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="{{ p.id }}" value="{{ op }}" required>
+                <label class="form-check-label">{{ op }}</label>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary btn-block">Continuar al Laberinto</button>
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Inicio | App de Astronautas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      color: white;
+      font-family: 'Orbitron', sans-serif;
+      overflow: hidden;
+    }
+
+    .stars {
+      background: url('https://img.freepik.com/free-vector/realistic-galaxy-background_23-2148991322.jpg') repeat;
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      animation: moveStars 60s linear infinite;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    @keyframes moveStars {
+      0% { background-position: 0 0; }
+      100% { background-position: -1000px 1000px; }
+    }
+    
+
+    .container {
+    position: relative;
+    z-index: 1;
+    top: 25%; /* bajé un poco para que no quede tan abajo */
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+    .mensaje-invitacion {
+    font-size: 1.2rem;
+    margin: 10px 0 20px 0;
+    color: #00f0ff;
+    text-shadow: 0 0 5px #00f0ff;
+  }
+
+    .nave {
+      position: absolute;
+      top: 50%;
+      left: -200px;
+      width: 100px;
+      animation: fly 10s linear infinite;
+      z-index: 1;
+    }
+
+    @keyframes fly {
+      0% { transform: translateX(0) rotate(0deg); opacity: 1; }
+      80% { opacity: 1; }
+      100% { transform: translateX(110vw) rotate(15deg); opacity: 0; }
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 2rem;
+      text-shadow: 0 0 10px #00f0ff;
+    }
+
+    .btn {
+      font-size: 1.3rem;
+      padding: 0.8rem 2rem;
+      border-radius: 30px;
+      margin: 1rem;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    }
+
+    .btn-primary {
+      background-color: #007bff;
+      border: none;
+    }
+
+    .btn-success {
+      background-color: #28a745;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+  <img class="nave" src="https://cdn-icons-png.flaticon.com/512/3212/3212608.png" alt="Nave">
+
+  <div class="container">
+    <br/>
+    <h1>🚀 Bienvenidos Astronautas</h1>
+    <p class="mensaje-invitacion">¿Quieres descubrir si eres el astronauta destinado a viajar por el espacio? ¡Participa y demuéstralo!</p>
+    <a href="/formulario" class="btn btn-primary">Participar</a>
+    <a href="/ranking" class="btn btn-success">Ver ranking</a>
+  </div>
+</body>
+</html>

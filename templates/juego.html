@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Laberinto Lunar 15x15</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <style>
+    #laberintoContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 30px;
+    }
+    #laberinto {
+      display: grid;
+      grid-template-columns: repeat(15, 30px);
+      grid-template-rows: repeat(15, 30px);
+      gap: 1px;
+      transition: transform 2s;
+    }
+    .celda {
+      width: 30px;
+      height: 30px;
+      background-color: #ddd;
+    }
+    .pared {
+      background-color: #333;
+    }
+    .nave {
+      background-color: blue;
+    }
+    .meta {
+      background-color: gold;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container text-center">
+    <h2>🛸 Laberinto Lunar 15x15</h2>
+    <p>¡Llega a la luna antes de que el laberinto gire demasiado!</p>
+    <div id="laberintoContainer">
+      <div id="laberinto"></div>
+    </div>
+
+    <form id="form" method="POST" style="display: none;">
+      <input type="hidden" name="tiempo" id="tiempo">
+      <button class="btn btn-success mt-3" type="submit">¡Continuar!</button>
+    </form>
+  </div>
+
+  <script>
+    const mapa = [
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,0,1,1,1,1,1,0,1,1,1,0],
+      [0,0,0,1,0,1,0,0,0,1,0,0,0,1,0],
+      [0,1,0,1,1,1,0,1,1,1,0,1,0,1,0],
+      [0,1,0,0,0,0,0,1,0,0,0,1,0,1,0],
+      [0,1,1,1,1,1,1,1,0,1,1,1,0,1,0],
+      [0,0,0,0,0,0,0,1,0,0,0,0,0,1,0],
+      [0,1,1,1,1,1,1,1,1,1,1,1,0,1,0],
+      [0,1,0,0,0,1,1,0,0,0,1,1,0,1,0],
+      [0,1,1,1,0,1,1,1,1,1,0,1,1,1,0],
+      [0,0,0,1,0,0,1,0,0,1,0,0,0,0,0],
+      [0,1,1,1,1,1,1,1,0,1,1,1,1,1,0],
+      [0,1,0,0,0,0,0,1,0,0,0,0,0,1,0],
+      [0,1,1,1,1,1,0,1,1,1,1,1,0,1,0],
+      [0,0,0,0,0,1,1,1,0,0,0,1,1,1,2]
+    ];
+    
+    let posX = 0, posY = 0;
+    const laberinto = document.getElementById('laberinto');
+    let startTime = Date.now();
+    let currentRotation = 0;
+
+    function dibujarLaberinto() {
+      laberinto.innerHTML = '';
+      for (let y = 0; y < mapa.length; y++) {
+        for (let x = 0; x < mapa[y].length; x++) {
+          const celda = document.createElement('div');
+          celda.classList.add('celda');
+          if (mapa[y][x] === 0) celda.classList.add('pared');
+          if (mapa[y][x] === 2) celda.classList.add('meta');
+          if (x === posX && y === posY) celda.classList.add('nave');
+          laberinto.appendChild(celda);
+        }
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      let nuevoX = posX;
+      let nuevoY = posY;
+      if (e.key === 'ArrowUp') nuevoY--;
+      if (e.key === 'ArrowDown') nuevoY++;
+      if (e.key === 'ArrowLeft') nuevoX--;
+      if (e.key === 'ArrowRight') nuevoX++;
+      if (
+        nuevoX >= 0 && nuevoY >= 0 &&
+        nuevoY < mapa.length && nuevoX < mapa[0].length &&
+        mapa[nuevoY][nuevoX] !== 0
+      ) {
+        posX = nuevoX;
+        posY = nuevoY;
+        dibujarLaberinto();
+        if (mapa[posY][posX] === 2) {
+          const tiempo = ((Date.now() - startTime) / 1000).toFixed(1);
+          document.getElementById('tiempo').value = tiempo;
+          document.getElementById('form').style.display = 'block';
+        }
+      }
+    });
+
+    // Rotar el laberinto cada 5 segundos
+    setInterval(() => {
+      currentRotation = (currentRotation + 90) % 360;
+      laberinto.style.transform = `rotate(${currentRotation}deg)`;
+    }, 5000);
+
+    dibujarLaberinto();
+  </script>
+</body>
+</html>
