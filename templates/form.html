@@ -7,8 +7,9 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
 <body class="bg-light p-4">
+  {% include 'partials/loader.html' %}
   <div class="container">
-    <h2 class="mb-4 text-center">🧑‍🚀 Formulario de Postulación</h2>
+    <h2 class="mb-4 text-center">Formulario de Postulación</h2>
     <form action="/procesar" method="post">
       {% set campos = [
         ('nombre', 'text', '', '', '', 'Nombre completo del postulante.', 'Ej: Juan Pérez'),

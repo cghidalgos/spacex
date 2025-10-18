@@ -1,21 +1,25 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <title>Inicio | App de Astronautas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
   <style>
     body {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+      color: #222;
+      font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+      min-height: 100vh;
       margin: 0;
       padding: 0;
-      background: black;
-      color: white;
-      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
       overflow: hidden;
     }
-
     .stars {
       background: url('https://img.freepik.com/free-vector/realistic-galaxy-background_23-2148991322.jpg') repeat;
       position: absolute;
@@ -25,79 +29,85 @@
       width: 100%;
       animation: moveStars 60s linear infinite;
       z-index: 0;
-      opacity: 0.6;
+      opacity: 0.5;
     }
-
     @keyframes moveStars {
       0% { background-position: 0 0; }
       100% { background-position: -1000px 1000px; }
     }
-    
-
-    .container {
-    position: relative;
-    z-index: 1;
-    top: 25%; /* bajé un poco para que no quede tan abajo */
-    text-align: center;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-    .mensaje-invitacion {
-    font-size: 1.2rem;
-    margin: 10px 0 20px 0;
-    color: #00f0ff;
-    text-shadow: 0 0 5px #00f0ff;
-  }
-
-    .nave {
-      position: absolute;
-      top: 50%;
-      left: -200px;
-      width: 100px;
-      animation: fly 10s linear infinite;
+    .main-box {
+      background: rgba(255,255,255,0.97);
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(60, 60, 120, 0.13);
+      padding: 40px 32px 32px 32px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      margin: 32px 0;
+      position: relative;
       z-index: 1;
     }
-
-    @keyframes fly {
-      0% { transform: translateX(0) rotate(0deg); opacity: 1; }
-      80% { opacity: 1; }
-      100% { transform: translateX(110vw) rotate(15deg); opacity: 0; }
+    .main-box .astro-img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 50%;
+      box-shadow: 0 4px 24px rgba(99,102,241,0.13);
+      margin-bottom: 16px;
+      border: 4px solid #6366f1;
+      background: #fff;
     }
-
-    h1 {
-      font-size: 3rem;
-      margin-bottom: 2rem;
-      text-shadow: 0 0 10px #00f0ff;
+    .main-box h1 {
+      font-size: 2.1rem;
+      font-weight: 700;
+      margin-bottom: 0.7rem;
+      color: #222;
     }
-
-    .btn {
-      font-size: 1.3rem;
-      padding: 0.8rem 2rem;
-      border-radius: 30px;
-      margin: 1rem;
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    .main-box p {
+      font-size: 1.15rem;
+      color: #555;
+      margin-bottom: 2.2rem;
     }
-
-    .btn-primary {
-      background-color: #007bff;
+    .main-box .btn {
+      font-size: 1.1rem;
+      padding: 0.7rem 2rem;
+      border-radius: 24px;
+      margin: 0.5rem 0.3rem;
+      box-shadow: 0 2px 12px rgba(99,102,241,0.09);
       border: none;
+      transition: background 0.2s, color 0.2s;
     }
-
-    .btn-success {
-      background-color: #28a745;
-      border: none;
+    .main-box .btn-primary {
+      background: linear-gradient(90deg, #6366f1 0%, #7c3aed 100%);
+      color: #fff;
+    }
+    .main-box .btn-primary:hover {
+      background: linear-gradient(90deg, #7c3aed 0%, #6366f1 100%);
+      color: #fff;
+    }
+    .main-box .btn-success {
+      background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+      color: #fff;
+    }
+    .main-box .btn-success:hover {
+      background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
+      color: #fff;
+    }
+    @media (max-width: 600px) {
+      .main-box { padding: 24px 8px 20px 8px; }
+      .main-box h1 { font-size: 1.3rem; }
+      .main-box .icon { font-size: 3rem; }
     }
   </style>
 </head>
 <body>
+  {% include 'partials/loader.html' %}
   <div class="stars"></div>
-  <img class="nave" src="https://cdn-icons-png.flaticon.com/512/3212/3212608.png" alt="Nave">
-
-  <div class="container">
-    <br/>
-    <h1>🚀 Bienvenidos Astronautas</h1>
-    <p class="mensaje-invitacion">¿Quieres descubrir si eres el astronauta destinado a viajar por el espacio? ¡Participa y demuéstralo!</p>
-    <a href="/formulario" class="btn btn-primary">Participar</a>
+  <div class="main-box">
+    <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=facearea&w=400&q=80" alt="Astronauta real" class="astro-img" />
+    <h1>Bienvenido/a a la Misión Espacial</h1>
+    <p>¿Listo para descubrir si tienes lo necesario para ser astronauta?<br>Participa en los retos y compite en el ranking.</p>
+    <a href="/formulario" class="btn btn-primary">Comenzar</a>
     <a href="/ranking" class="btn btn-success">Ver ranking</a>
   </div>
 </body>

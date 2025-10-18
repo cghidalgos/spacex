@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-light p-4">
+{% include 'partials/loader.html' %}
 <div class="container">
   <!-- Encabezado principal -->
   <div class="text-center mb-5">
@@ -38,8 +39,8 @@
           </div>
           <div class="progress mt-2">
             <div class="progress-bar bg-success" 
-                 style="width: {{ (datos.trivia_puntaje/datos.trivia_total)*100 }}%">
-              {{ (datos.trivia_puntaje/datos.trivia_total)*100 | round(1) }}%
+                 style="width: {{ porcentajes.trivia }}%">
+              {{ porcentajes.trivia | round(1) }}%
             </div>
           </div>
         </div>
@@ -55,10 +56,45 @@
           </div>
           <div class="progress mt-2">
             <div class="progress-bar bg-info" 
-                 style="width: {{ (1 - (datos.laberinto_tiempo/120))*100 }}%">
-              Eficiencia: {{ (1 - (datos.laberinto_tiempo/120))*100 | round(1) }}%
+                 style="width: {{ porcentajes.laberinto }}%">
+              Eficiencia: {{ porcentajes.laberinto | round(1) }}%
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Perfil sugerido y Áreas de mejora -->
+  <div class="row mb-4">
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">🧭 Perfil sugerido</h5>
+          <div class="alert alert-primary mb-3">
+            <h4 class="mb-0"><strong>{{ datos.tipo_ingeniero }}</strong></h4>
+          </div>
+          <p class="mb-0 text-muted">Mejor habilidad destacada: <strong>{{ datos.mejor_habilidad }}</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">🛠️ Áreas de mejora</h5>
+          {% if datos.mejoras and datos.mejoras|length > 0 %}
+          <ul class="list-group">
+            {% for m in datos.mejoras %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span><strong>{{ m.area }}</strong></span>
+              <span class="ml-3 text-muted">{{ m.detalle }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="alert alert-success mb-0">¡Excelente! No se detectan áreas críticas de mejora.</div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -69,6 +105,14 @@
     <div class="card-body">
       <h5 class="card-title text-center">📊 Distribución de Habilidades</h5>
       <canvas id="graficoHabilidades" height="150"></canvas>
+    </div>
+  </div>
+
+  <!-- Gráfico de composición de puntaje -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title text-center">📈 Componentes del Puntaje (25% c/u)</h5>
+      <canvas id="graficoComponentes" height="120"></canvas>
     </div>
   </div>
 
@@ -104,25 +148,30 @@
     </div>
   </div>
 
-  <!-- Desglose de ponderaciones -->
+  <!-- Desglose de ponderaciones (25% cada uno) -->
   <div class="card mb-4">
     <div class="card-body">
-      <h5 class="card-title text-center">🔍 Composición del Puntaje Final</h5>
+      <h5 class="card-title text-center">🔍 Composición del Puntaje Final (25% cada uno)</h5>
       <div class="row text-center">
-        <div class="col-md-4">
-          <h6>Formulario de Habilidades</h6>
-          <div class="display-4 text-primary">50%</div>
-          <p class="small">{{ (datos.probabilidad * 100) | round(1) }}% original</p>
-        </div>
-        <div class="col-md-4">
+        <div class="col-md-3 mb-3">
           <h6>Prueba de Conocimiento</h6>
-          <div class="display-4 text-success">30%</div>
-          <p class="small">{{ datos.trivia_puntaje }} respuestas correctas</p>
+          <div class="display-4 text-success">{{ porcentajes.trivia | round(1) }}%</div>
+          <p class="small">{{ datos.trivia_puntaje }} de {{ datos.trivia_total }} correctas</p>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3 mb-3">
           <h6>Eficiencia en Laberinto</h6>
-          <div class="display-4 text-info">20%</div>
+          <div class="display-4 text-info">{{ porcentajes.laberinto | round(1) }}%</div>
           <p class="small">{{ datos.laberinto_tiempo | round(1) }} segundos</p>
+        </div>
+        <div class="col-md-3 mb-3">
+          <h6>Habilidades del Formulario</h6>
+          <div class="display-4 text-primary">{{ porcentajes.habilidades | round(1) }}%</div>
+          <p class="small">Promedio normalizado de habilidades</p>
+        </div>
+        <div class="col-md-3 mb-3">
+          <h6>Gravedad Cero</h6>
+          <div class="display-4" style="color:#8b5cf6;">{{ porcentajes.gravedad | default(0) | round(1) }}%</div>
+          <p class="small">Puntos: {{ datos.gravedad_puntos | default(0) }} · Dificultad: {{ datos.gravedad_dificultad | default('medium') }}</p>
         </div>
       </div>
     </div>
@@ -134,8 +183,9 @@
 <script>
   // Configuración del gráfico de habilidades
   const ctx = document.getElementById('graficoHabilidades').getContext('2d');
-  const habilidadesLabels = {{ evaluaciones.keys() | list | map('replace', '_', ' ') | map('capitalize') | list | tojson }};
-  const habilidadesValores = {{ evaluaciones.values() | map(attribute=0) | list | tojson }};
+  const evaluaciones = {{ evaluaciones | tojson }};
+  const habilidadesLabels = Object.keys(evaluaciones).map(k => k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
+  const habilidadesValores = Object.values(evaluaciones).map(v => v[0]);
 
   new Chart(ctx, {
     type: 'radar',
@@ -155,6 +205,49 @@
         ticks: {
           beginAtZero: true,
           max: 10
+        }
+      }
+    }
+  });
+
+  // Gráfico de barras de componentes
+  const compCtx = document.getElementById('graficoComponentes').getContext('2d');
+  const porcentajesData = {{ porcentajes | tojson }};
+  const compLabels = ['Trivia', 'Laberinto', 'Habilidades', 'Gravedad Cero'];
+  const compValores = [
+    (porcentajesData.trivia || 0),
+    (porcentajesData.laberinto || 0),
+    (porcentajesData.habilidades || 0),
+    (porcentajesData.gravedad || 0)
+  ];
+
+  new Chart(compCtx, {
+    type: 'bar',
+    data: {
+      labels: compLabels,
+      datasets: [{
+        label: 'Porcentaje',
+        data: compValores,
+        backgroundColor: [
+          'rgba(40, 167, 69, 0.6)',   // Trivia (green)
+          'rgba(23, 162, 184, 0.6)',  // Laberinto (teal)
+          'rgba(0, 123, 255, 0.6)',   // Habilidades (blue)
+          'rgba(139, 92, 246, 0.6)'   // Gravedad (purple)
+        ],
+        borderColor: [
+          'rgba(40, 167, 69, 1)',
+          'rgba(23, 162, 184, 1)',
+          'rgba(0, 123, 255, 1)',
+          'rgba(139, 92, 246, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true,
+          suggestedMax: 100
         }
       }
     }

@@ -4,3 +4,5 @@ services:
     build: .
     ports:
       - "5013:5000"
+    volumes:
+      - ./usuarios.json:/app/usuarios.json
