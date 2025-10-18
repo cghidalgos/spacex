@@ -125,6 +125,16 @@
       transition: transform 0.2s;
     }
     .btn-space:hover { transform: scale(1.05); }
+    /* Evitar zoom por doble toque y selección accidental */
+    body, #laberintoContainer, #laberinto, .touch-btn {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation; /* sugiere evitar doble-tap zoom */
+    }
+    #laberintoContainer, #laberinto {
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: contain;
+    }
     @media (min-width: 600px) {
       .touch-controls { top: 55%; }
     }
@@ -336,6 +346,20 @@
     laberinto.style.pointerEvents = "none";
     document.getElementById('touchControls').style.opacity = "0.5";
     document.getElementById('touchControls').style.pointerEvents = "none";
+
+    // Prevenir zoom por doble toque en móviles (iOS/Android)
+    (function preventDoubleTapZoom(){
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', function(e) {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+          e.preventDefault(); // bloquea el segundo tap que provoca zoom
+        }
+        lastTouchEnd = now;
+      }, { passive: false });
+      // Evitar gesto de pellizco-zoom (iOS)
+      document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
+    })();
   </script>
 </body>
 </html>
