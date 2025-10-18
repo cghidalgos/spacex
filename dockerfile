@@ -24,6 +24,9 @@ ENV FLASK_RUN_HOST=0.0.0.0
 # Expone el puerto en el que se ejecutará la aplicación
 EXPOSE 5000
 
-# Comando para ejecutar la aplicación Flask
-# Comando para ejecutar la aplicación con Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+# Comando para ejecutar la aplicación con Gunicorn (multi-workers para concurrencia)
+# Ajusta los workers/threads con variables env si lo deseas: GUNICORN_WORKERS, GUNICORN_THREADS
+ENV GUNICORN_WORKERS=3
+ENV GUNICORN_THREADS=2
+# Usamos la forma shell para permitir expansión de variables de entorno
+CMD gunicorn --bind 0.0.0.0:5000 --workers ${GUNICORN_WORKERS:-3} --threads ${GUNICORN_THREADS:-2} --timeout 60 --access-logfile - app:app

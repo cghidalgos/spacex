@@ -5,6 +5,10 @@ from datetime import datetime, timezone
 from collections import Counter
 import json
 import os
+import tempfile
+import fcntl
+import time
+import errno
 
 app = Flask(__name__)
 app.secret_key = 'tu_clave_secreta'
@@ -19,15 +23,140 @@ except Exception:
 
 
 
-# Cargar usuarios si existe el archivo
-# Cargar usuarios si existe el archivo
-usuarios = []
+##############################
+# Persistencia segura en disco
+##############################
 
-if os.path.exists('usuarios.json'):
-    with open('usuarios.json', 'r', encoding='utf-8') as f:
-        contenido = f.read().strip()
+USUARIOS_PATH = 'usuarios.json'
+USUARIOS_LOCK_PATH = USUARIOS_PATH + '.lock'
+
+def _ensure_usuarios_file() -> None:
+    """Crea el archivo de usuarios si no existe."""
+    if not os.path.exists(USUARIOS_PATH):
+        # Garantiza que el directorio exista (por si cambia la ruta en el futuro)
+        dir_name = os.path.dirname(USUARIOS_PATH)
+        if dir_name and not os.path.exists(dir_name):
+            os.makedirs(dir_name, exist_ok=True)
+        with open(USUARIOS_PATH, 'w', encoding='utf-8') as f:
+            f.write('[]')
+
+def leer_usuarios() -> list:
+    """Lee usuarios desde disco de forma robusta.
+    Usa reemplazo atómico en escritura, por lo que aquí basta con leer y tolerar JSON corrupto transitorio.
+    """
+    _ensure_usuarios_file()
+    try:
+        with open(USUARIOS_PATH, 'r', encoding='utf-8') as f:
+            contenido = f.read().strip()
         if contenido:
-            usuarios = json.loads(contenido)
+            return json.loads(contenido)
+        return []
+    except Exception:
+        # Si por alguna razón el archivo está incompleto/transitorio, devolvemos lista vacía en vez de romper la vista
+        return []
+
+def agregar_usuario(entrada: dict) -> None:
+    """Anexa un usuario al archivo con escritura atómica y lock exclusivo.
+    - Bloquea el archivo mientras arma la nueva lista
+    - Escribe a un archivo temporal y luego hace os.replace, que es atómico
+    """
+    _ensure_usuarios_file()
+    # Usamos un lockfile separado para evitar EBUSY al reemplazar un archivo bind-mount abierto
+    lock_fd = os.open(USUARIOS_LOCK_PATH, os.O_CREAT | os.O_RDWR)
+    fcntl.flock(lock_fd, fcntl.LOCK_EX)
+    try:
+        # Leer el contenido actual (fuera de un descriptor bloqueado del propio archivo)
+        try:
+            with open(USUARIOS_PATH, 'r', encoding='utf-8') as rf:
+                contenido = rf.read().strip()
+            datos = json.loads(contenido) if contenido else []
+            if not isinstance(datos, list):
+                datos = []
+        except Exception:
+            datos = []
+
+        datos.append(entrada)
+
+        # Escritura a temporal y replace con reintentos
+        dir_ = os.path.dirname(USUARIOS_PATH) or '.'
+        fd, tmp_path = tempfile.mkstemp(dir=dir_, prefix='usuarios_', suffix='.json.tmp')
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as tf:
+                json.dump(datos, tf, ensure_ascii=False, indent=4)
+                tf.flush()
+                os.fsync(tf.fileno())
+
+            # Intentar reemplazar varias veces para esquivar EBUSY en sistemas de archivos montados
+            replaced = False
+            for attempt in range(6):
+                try:
+                    os.replace(tmp_path, USUARIOS_PATH)
+                    replaced = True
+                    break
+                except OSError as e:
+                    if e.errno in (errno.EBUSY, errno.EPERM):
+                        time.sleep(0.05 * (attempt + 1))
+                        continue
+                    raise
+            if not replaced:
+                # Último recurso: escribir directamente (no atómico, pero bajo lock de escritura)
+                with open(USUARIOS_PATH, 'w', encoding='utf-8') as wf:
+                    json.dump(datos, wf, ensure_ascii=False, indent=4)
+                    wf.flush()
+                    os.fsync(wf.fileno())
+        finally:
+            # Limpieza del temporal si quedó
+            try:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            except Exception:
+                pass
+    finally:
+        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        os.close(lock_fd)
+
+
+def limpiar_usuarios() -> None:
+    """Limpia el archivo de usuarios de forma segura (lista vacía).
+    Usa el mismo mecanismo de lock y reemplazo atómico con reintentos.
+    """
+    _ensure_usuarios_file()
+    lock_fd = os.open(USUARIOS_LOCK_PATH, os.O_CREAT | os.O_RDWR)
+    fcntl.flock(lock_fd, fcntl.LOCK_EX)
+    try:
+        dir_ = os.path.dirname(USUARIOS_PATH) or '.'
+        fd, tmp_path = tempfile.mkstemp(dir=dir_, prefix='usuarios_', suffix='.json.tmp')
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as tf:
+                tf.write('[]')
+                tf.flush()
+                os.fsync(tf.fileno())
+
+            replaced = False
+            for attempt in range(6):
+                try:
+                    os.replace(tmp_path, USUARIOS_PATH)
+                    replaced = True
+                    break
+                except OSError as e:
+                    if e.errno in (errno.EBUSY, errno.EPERM):
+                        time.sleep(0.05 * (attempt + 1))
+                        continue
+                    raise
+            if not replaced:
+                with open(USUARIOS_PATH, 'w', encoding='utf-8') as wf:
+                    wf.write('[]')
+                    wf.flush()
+                    os.fsync(wf.fileno())
+        finally:
+            try:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            except Exception:
+                pass
+    finally:
+        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        os.close(lock_fd)
 
 # Preguntas de trivia sobre astronautas
 trivia_preguntas = [
@@ -76,7 +205,7 @@ trivia_preguntas = [
     {
         'id': 8,
         'pregunta': '¿Cuál es el satélite natural más grande del planeta Júpiter?',
-        'opciones': ['Europa', 'Ganímedes', 'Ío', 'Calisto'],
+        'opciones': ['Europa', 'Ganímedes', 'Ítemenes', 'Calisto'],
         'respuesta': 'Ganímedes'
     },
     {
@@ -97,6 +226,10 @@ trivia_preguntas = [
 def index():
     session.clear()
     return render_template('index.html')
+
+@app.route('/healthz')
+def healthz():
+    return {'status': 'ok'}, 200
 
 @app.route('/trivia', methods=['GET', 'POST'])
 def trivia():
@@ -306,11 +439,8 @@ def procesar():
     entrada['evaluaciones'] = evaluaciones
     entrada['mejor_habilidad'] = mejor_habilidad
 
-    usuarios.append(entrada)
-
-    # Guardar usuarios en archivo JSON
-    with open('usuarios.json', 'w', encoding='utf-8') as f:
-        json.dump(usuarios, f, ensure_ascii=False, indent=4)
+    # Persistir de manera segura (atómica) para evitar corrupción con múltiples usuarios concurrentes
+    agregar_usuario(entrada)
 
     return render_template(
         'resultados.html',
@@ -338,15 +468,22 @@ def gravedad_cero_fin():
         session['gravedad_dificultad'] = 'medium'
     return redirect('/formulario')
 
+@app.route('/admin/reset', methods=['POST'])
+def admin_reset():
+    """Resetea todos los usuarios si la clave es correcta."""
+    clave = request.form.get('clave', '')
+    if clave != 'holamundo123':
+        # 403 si la clave es incorrecta (respuesta simple para evitar dependencias de plantilla)
+        return ("Clave incorrecta. No se realizó el reinicio.", 403, {"Content-Type": "text/plain; charset=utf-8"})
+    limpiar_usuarios()
+    # Limpiar sesión actual también
+    session.clear()
+    return redirect('/')
+
 @app.route('/ranking')
 def ranking():
-    # Leer usuarios.json cada vez
-    usuarios_actual = []
-    if os.path.exists('usuarios.json'):
-        with open('usuarios.json', 'r', encoding='utf-8') as f:
-            contenido = f.read().strip()
-            if contenido:
-                usuarios_actual = json.loads(contenido)
+    # Leer usuarios desde disco (robusto ante concurrencia)
+    usuarios_actual = leer_usuarios()
 
     top_usuarios = sorted(
         usuarios_actual,
@@ -383,4 +520,5 @@ def ranking():
     )
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5004)
+    # Solo para desarrollo local. En contenedor se usa Gunicorn (ver Dockerfile)
+    app.run(debug=False, host='0.0.0.0', port=5004)

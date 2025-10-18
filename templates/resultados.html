@@ -177,10 +177,56 @@
     </div>
   </div>
 
-  <a href="/" class="btn btn-secondary btn-block mt-4">⬅ Volver al Inicio</a>
+  <div class="row mt-4">
+    <div class="col-md-6 mb-2">
+      <a href="/" class="btn btn-secondary btn-block">⬅ Volver al Inicio</a>
+    </div>
+    <div class="col-md-6 mb-2">
+      <button class="btn btn-danger btn-block" data-toggle="modal" data-target="#resetModal">🗑️ Reiniciar juego</button>
+    </div>
+  </div>
+
+  <!-- Modal de confirmación para reiniciar -->
+  <div class="modal fade" id="resetModal" tabindex="-1" role="dialog" aria-labelledby="resetModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="resetModalLabel">Reiniciar juego</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form method="POST" action="/admin/reset" onsubmit="return validarClave();">
+          <div class="modal-body">
+            <p>Esta acción eliminará todos los usuarios guardados. Ingresa la clave para confirmar:</p>
+            <div class="form-group">
+              <label for="claveAdmin">Clave</label>
+              <input type="password" name="clave" id="claveAdmin" class="form-control" placeholder="Ingresa la clave" required>
+              <small class="form-text text-muted">La clave es necesaria para confirmar el reinicio.</small>
+            </div>
+            <div id="claveError" class="text-danger small" style="display:none;">La clave no coincide.</div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger">Reiniciar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
+  function validarClave(){
+    const input = document.getElementById('claveAdmin');
+    const err = document.getElementById('claveError');
+    if(input.value !== 'holamundo123'){
+      err.style.display = 'block';
+      return false;
+    }
+    err.style.display = 'none';
+    return true;
+  }
   // Configuración del gráfico de habilidades
   const ctx = document.getElementById('graficoHabilidades').getContext('2d');
   const evaluaciones = {{ evaluaciones | tojson }};
@@ -253,5 +299,7 @@
     }
   });
 </script>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </body>
 </html>

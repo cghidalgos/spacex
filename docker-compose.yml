@@ -1,4 +1,3 @@
-version: '3'
 services:
   web:
     build: .
@@ -6,3 +5,7 @@ services:
       - "5013:5000"
     volumes:
       - ./usuarios.json:/app/usuarios.json
+    restart: unless-stopped
+    environment:
+      - GUNICORN_WORKERS=3
+      - GUNICORN_THREADS=2
